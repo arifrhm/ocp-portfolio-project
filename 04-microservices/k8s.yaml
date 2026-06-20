@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: demo-microservice
+  namespace: development
+  labels:
+    app: demo-microservice
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: demo-microservice
+  template:
+    metadata:
+      labels:
+        app: demo-microservice
+    spec:
+      containers:
+      - name: demo-microservice
+        # The image will be pulled from local k3d cache if you load it via `k3d image import`
+        image: demo-microservice:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 3000
+        resources:
+          requests:
+            cpu: 50m
+            memory: 64Mi
+          limits:
+            cpu: 100m
+            memory: 128Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: demo-microservice-svc
+  namespace: development
+spec:
+  selector:
+    app: demo-microservice
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 3000
+  type: ClusterIP

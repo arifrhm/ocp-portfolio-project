@@ -1,0 +1,33 @@
+apiVersion: kubevirt.io/v1
+kind: VirtualMachine
+metadata:
+  name: test-vm-cirros
+  namespace: kubevirt-workloads
+spec:
+  # Set to true if you want the VM to start automatically when deployed
+  running: true
+  template:
+    metadata:
+      labels:
+        kubevirt.io/domain: test-vm-cirros
+    spec:
+      domain:
+        devices:
+          disks:
+            - disk:
+                bus: virtio
+              name: containerdisk
+          interfaces:
+            - name: default
+              masquerade: {}
+        resources:
+          requests:
+            memory: 128M
+            cpu: 100m
+      networks:
+        - name: default
+          pod: {}
+      volumes:
+        - name: containerdisk
+          containerDisk:
+            image: quay.io/kubevirt/cirros-container-disk-demo

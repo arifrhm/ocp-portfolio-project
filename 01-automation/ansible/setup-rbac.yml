@@ -1,0 +1,68 @@
+---
+# To run this playbook, you may need to install the kubernetes.core collection and python library:
+# ansible-galaxy collection install kubernetes.core
+# pip3 install kubernetes
+
+- name: Setup Kubernetes Workspaces and RBAC
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  vars:
+    namespaces:
+      - development
+      - production
+      - kubevirt-workloads
+
+  tasks:
+    - name: Create Workload Namespaces
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Namespace
+          metadata:
+            name: "{{ item }}"
+      loop: "{{ namespaces }}"
+
+    - name: Create a ServiceAccount for CI/CD Pipeline
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: ServiceAccount
+          metadata:
+            name: cicd-service-account
+            namespace: development
+
+    - name: Create Role for CI/CD in development
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: rbac.authorization.k8s.io/v1
+          kind: Role
+          metadata:
+            name: cicd-deployer-role
+            namespace: development
+          rules:
+            - apiGroups: ["", "apps", "extensions", "kubevirt.io"]
+              resources: ["deployments", "pods", "services", "virtualmachines", "virtualmachineinstances"]
+              verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+
+    - name: Bind Role to ServiceAccount
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: rbac.authorization.k8s.io/v1
+          kind: RoleBinding
+          metadata:
+            name: cicd-deployer-binding
+            namespace: development
+          subjects:
+            - kind: ServiceAccount
+              name: cicd-service-account
+              namespace: development
+          roleRef:
+            kind: Role
+            name: cicd-deployer-role
+            apiGroup: rbac.authorization.k8s.io
