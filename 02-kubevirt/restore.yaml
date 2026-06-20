@@ -1,0 +1,11 @@
+apiVersion: snapshot.kubevirt.io/v1alpha1
+kind: VirtualMachineRestore
+metadata:
+  name: test-vm-cirros-restore
+  namespace: kubevirt-workloads
+spec:
+  target:
+    apiGroup: kubevirt.io
+    kind: VirtualMachine
+    name: test-vm-cirros
+  virtualMachineSnapshotName: test-vm-cirros-snapshot
